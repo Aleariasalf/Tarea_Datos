@@ -1,14 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net;
-using System.Net.Sockets;
-using System.Timers;
 using System.Threading;
 
-namespace Tarea_Datos 
+namespace Tarea_Datos
 {
     class Program
     {
@@ -22,12 +15,11 @@ namespace Tarea_Datos
             Client client = new Client();
             client.Start_client();
         }
-        
-        static void StartServer() 
+
+        static void StartServer()
         {
             Server server = new Server();
             server.Start_server();
         }
-        
     }
 }

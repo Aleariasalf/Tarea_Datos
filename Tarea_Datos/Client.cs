@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 
 namespace Tarea_Datos
 {
@@ -12,23 +10,71 @@ namespace Tarea_Datos
     {
         public void Start_client()
         {
-            Socket listen = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            IPEndPoint connect = new IPEndPoint(IPAddress.Parse("192.168.0.100"), 5550);
+            try
+            {
+                Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                IPEndPoint serverEndpoint = new IPEndPoint(IPAddress.Parse("192.168.0.100"), 5550);
 
-            listen.Connect(connect);
+                clientSocket.Connect(serverEndpoint);
 
-            byte[] enviar_info = new byte[100];
-            string data;
-            Console.WriteLine("Ingrese su mensaje");
+                Thread receiveThread = new Thread(() => ReceiveMessages(clientSocket));
+                receiveThread.Start();
 
-            data = Console.ReadLine();
+                while (true)
+                {
+                    Console.WriteLine("Ingrese su mensaje (o 'salir' para terminar):");
+                    string data = Console.ReadLine();
 
-            enviar_info = Encoding.Default.GetBytes(data);
+                    if (data.ToLower() == "salir")
+                    {
+                        byte[] info_salir = Encoding.UTF8.GetBytes(data);
+                        clientSocket.Send(info_salir);
+                        break;
+                    }
 
-            listen.Send(enviar_info);
+                    byte[] info_a_enviar = Encoding.UTF8.GetBytes(data);
+                    clientSocket.Send(info_a_enviar);
+                }
 
-            Console.ReadKey();
+                clientSocket.Shutdown(SocketShutdown.Both);
+                clientSocket.Close();
+            }
+            catch (SocketException se)
+            {
+                Console.WriteLine($"Error de conexión: {se.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Se produjo un error: {ex.Message}");
+            }
+        }
 
+        private void ReceiveMessages(Socket clientSocket)
+        {
+            try
+            {
+                while (true)
+                {
+                    byte[] buffer = new byte[100];
+                    int received = clientSocket.Receive(buffer);
+
+                    if (received == 0)
+                    {
+                        break;
+                    }
+
+                    string data = Encoding.UTF8.GetString(buffer, 0, received);
+                    Console.WriteLine($"Mensaje recibido: {data}");
+                }
+            }
+            catch (SocketException se)
+            {
+                Console.WriteLine($"Error de socket: {se.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Se produjo un error: {ex.Message}");
+            }
         }
     }
 }
